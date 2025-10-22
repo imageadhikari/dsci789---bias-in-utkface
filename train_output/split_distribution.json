@@ -1,0 +1,83 @@
+{
+  "strat_mode": "gender_agegroup_race",
+  "total": {
+    "n": 23618,
+    "gender_counts": {
+      "1": 11289,
+      "0": 12329
+    },
+    "race_counts": {
+      "0": 10056,
+      "2": 3419,
+      "1": 4483,
+      "3": 3972,
+      "4": 1688
+    },
+    "age_group_counts": {
+      "senior": 1945,
+      "child": 4232,
+      "young_adult": 12187,
+      "middle_age": 5254
+    }
+  },
+  "train": {
+    "n": 18894,
+    "gender_counts": {
+      "1": 9032,
+      "0": 9862
+    },
+    "race_counts": {
+      "0": 8045,
+      "2": 2736,
+      "1": 3585,
+      "3": 3178,
+      "4": 1350
+    },
+    "age_group_counts": {
+      "young_adult": 9748,
+      "middle_age": 4204,
+      "child": 3385,
+      "senior": 1557
+    }
+  },
+  "val": {
+    "n": 2362,
+    "gender_counts": {
+      "1": 1113,
+      "0": 1249
+    },
+    "race_counts": {
+      "0": 1000,
+      "2": 349,
+      "4": 173,
+      "1": 442,
+      "3": 398
+    },
+    "age_group_counts": {
+      "young_adult": 1212,
+      "child": 425,
+      "senior": 184,
+      "middle_age": 541
+    }
+  },
+  "test": {
+    "n": 2362,
+    "gender_counts": {
+      "1": 1144,
+      "0": 1218
+    },
+    "race_counts": {
+      "0": 1011,
+      "1": 456,
+      "3": 396,
+      "4": 165,
+      "2": 334
+    },
+    "age_group_counts": {
+      "child": 422,
+      "young_adult": 1227,
+      "middle_age": 509,
+      "senior": 204
+    }
+  }
+}

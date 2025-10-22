@@ -1,0 +1,27 @@
+{
+  "total_scanned": 23623,
+  "good": 23618,
+  "bad": 5,
+  "bad_examples": [
+    [
+      "61_1_20170109142408075.jpg",
+      "wrong_token_count:3"
+    ],
+    [
+      "61_3_20170109150557335.jpg",
+      "wrong_token_count:3"
+    ],
+    [
+      "39_1_20170116174525125.jpg",
+      "wrong_token_count:3"
+    ],
+    [
+      "53__0_20170116184028385.jpg",
+      "double_underscore"
+    ],
+    [
+      "24_0_1_20170116220224657 .jpg",
+      "timestamp_not_digits"
+    ]
+  ]
+}

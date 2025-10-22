@@ -1,0 +1,23 @@
+{
+  "seed": 42,
+  "n_total": 23618,
+  "gender_counts": {
+    "1": 11289,
+    "0": 12329
+  },
+  "race_counts": {
+    "0": 10056,
+    "2": 3419,
+    "1": 4483,
+    "3": 3972,
+    "4": 1688
+  },
+  "age_group_counts": {
+    "senior": 1945,
+    "child": 4232,
+    "young_adult": 12187,
+    "middle_age": 5254
+  },
+  "use_sampler": false,
+  "use_class_weights": false
+}

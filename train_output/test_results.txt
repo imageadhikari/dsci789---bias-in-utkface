@@ -1,0 +1,30 @@
+
+ Overall Test metrics: 
+accuracy: 0.9204
+precision: 0.8924
+recall: 0.9502
+f1: 0.9204
+
+ Test metrics by age group: 
+child: n=422, acc=0.7512, f1=0.7862
+young_adult: n=1227, acc=0.9601, f1=0.9645
+middle_age: n=509, acc=0.9607, f1=0.9355
+senior: n=204, acc=0.9314, f1=0.9231
+
+ Test metrics by race: 
+White: n=1011, acc=0.9298, f1=0.9247
+Black: n=456, acc=0.9386, f1=0.9404
+Asian: n=334, acc=0.8713, f1=0.8853
+Indian: n=396, acc=0.9318, f1=0.9288
+Other: n=165, acc=0.8848, f1=0.9026
+
+Full classification report (test):
+              precision    recall  f1-score   support
+
+        male       0.95      0.89      0.92      1218
+      female       0.89      0.95      0.92      1144
+
+    accuracy                           0.92      2362
+   macro avg       0.92      0.92      0.92      2362
+weighted avg       0.92      0.92      0.92      2362
+
