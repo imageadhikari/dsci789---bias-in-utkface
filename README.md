@@ -46,6 +46,8 @@ A comprehensive analysis of potential bias in gender classification models using
 
 ## 🚀 Quick Start
 
+Before starting, download the UTKFace Dataset from [here](https://susanqq.github.io/UTKFace/). It has three folders. Save all those folders in a folder called train_data in the root directory.
+
 ### 1. Preprocessing
 Crop and align face images using dlib's 5-point landmark predictor:
 
