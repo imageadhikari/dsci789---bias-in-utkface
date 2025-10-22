@@ -3,9 +3,9 @@ import os
 import dlib
 import cv2
 
-INPUT_DIR = "/home/stu13/s8/ia3494/exp_ai_assignments/train_data/part1"
-OUTPUT_DIR = "/home/stu13/s8/ia3494/exp_ai_assignments/train_data/part1_cropped"
-PREDICTOR_PATH = "/home/stu13/s8/ia3494/exp_ai_assignments/train_data/shape_predictor_5_face_landmarks.dat"
+INPUT_DIR = "../train_data/part1"
+OUTPUT_DIR = "../train_data/part1_cropped"
+PREDICTOR_PATH = "../train_data/shape_predictor_5_face_landmarks.dat"
 OUTPUT_SIZE = 224
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)

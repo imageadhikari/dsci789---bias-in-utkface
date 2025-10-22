@@ -65,6 +65,7 @@ bunzip2 shape_predictor_5_face_landmarks.dat.bz2
 # Run face alignment (modify paths in script as needed)
 python preprocess/crop_and_align.py
 ```
+But first change the paths in the crop_and_align.py script to use your landmark predictor and dataset.
 
 ### 2. Data Analysis
 Analyze dataset balance and demographics:
