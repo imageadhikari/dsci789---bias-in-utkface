@@ -1,0 +1,424 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{subcaption}
+\usepackage{float}
+
+\title{Explaining and Detecting Bias in UTKFace - DSCI 789}
+\author{Image Adhikari \\ 
+\small Team A - Gender Classification}
+% \author{Image Adhikari}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+This report presents a comprehensive analysis of potential bias in a gender classification model trained on the UTKFace dataset. Using explainable AI techniques including LIME, SHAP, TCAV, and ACE, we investigate how the model makes decisions and whether those decisions rely on spurious or sensitive demographic cues. Our analysis reveals important insights about model behavior across different demographic subgroups and provides concrete recommendations for bias mitigation.
+
+\section{Dataset Preparation and Model Training}
+
+\subsection{Dataset Processing}
+The UTKFace dataset contains images of faces with ages ranging from 0-116 years, labeled with age, gender, and ethnicity information. We implemented a preprocessing pipeline as follows:
+
+\begin{enumerate}
+\item \textbf{Face Detection and Alignment}: Using dlib's frontal face detector and 5-point landmark predictor, we detected faces in raw images and extracted aligned face chips of size 224×224 pixels using \texttt{dlib.get\_face\_chip()}.
+\item \textbf{Data Organization}: Images were processed across three data partitions (part1, part2, part3) with consistent cropping applied to all partitions.
+\item \textbf{Normalization}: Standard ImageNet normalization was applied with mean=[0.485, 0.456, 0.406] and std=[0.229, 0.224, 0.225] to match pretrained model expectations.
+\end{enumerate}
+
+
+\subsection{Data Balance Analysis}
+
+\begin{itemize}
+\item \textbf{Overall Gender Balance}: The dataset shows excellent gender balance with a ratio of approximately 1.09:1 (male:female), indicating minimal class imbalance.
+\item \textbf{Age Group Distribution}: Gender distribution is slightly concentrated in the young adult age group(18-39) but remains consistent across other age groups (child: 0-17, middle age: 40-64, senior: 65+).
+\item \textbf{Racial Distribution}: Analysis across racial categories (White, Black, Asian, Indian, Other) shows a large \textit{White} population but looking at the gender distribution across race, there is no significant demographic skew.
+\item \textbf{Intersection Analysis}: Age-race intersections maintain gender balance, with only significant imbalance in the \textit{``middle\_age\_white''} subgroup.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{output.png}
+\caption{Dataset distribution across gender, age and race}
+\label{fig:data_analysis}
+\end{figure}
+
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\textwidth]{age.png}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\textwidth]{race.png}
+\end{subfigure}
+\caption{Dataset distribution showing gender balance by age group and race categories}
+\label{fig:data_analysis}
+\end{figure}
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{age_race.png}
+\caption{Dataset distribution showing gender balance across combined age and racial subgroups}
+\label{fig:data_analysis}
+\end{figure}
+
+\subsection{Model Architecture and Training}
+We fine-tuned a ResNet-18 model for binary gender classification:
+
+\begin{itemize}
+\item \textbf{Architecture}: ResNet-18 with pretrained ImageNet weights, modified final layer for 2-class output
+\item \textbf{Training Configuration}: 5 epochs, batch size 64, learning rate 0.01
+\item \textbf{Data Split}: 80\% training, 10\% validation, 10\% testing with stratified sampling
+\item \textbf{Loss Function}: Cross-entropy loss without class weighting due to balanced dataset. We implemented \texttt{WeightedRandomSampler} and class weights functions but did not use them later.
+\end{itemize}
+
+The model achieved good performance with 92.04\% overall accuracy, precision of 89.24\%, recall of 95.02\%, and F1-score of 92.04\% on the test set.
+\\
+\\
+\textbf{Subgroup Performance Analysis:} Evaluation across demographic subgroups shows some performance disparities. Children (ages 0-17) achieved lower accuracy(75.12\%) compared to adults who consistently performed better(96.01\% for young adults, 96.07\% for middle age and 93.14\% for seniors), while Asian populations showed reduced accuracy(87.13\%) compared to other racial groups(92.98\% for White, 93.86\% for Black, and 93.18\% for Indian). These performance gaps highlight potential model biases.
+
+
+\section{Local Explanations: LIME and SHAP Analysis}
+
+\subsection{LIME Explanations}
+LIME (Local Interpretable Model-agnostic Explanations) was applied to analyze local decision-making patterns using superpixel segmentation:
+\\
+\\
+\textbf{Key Findings:}
+\begin{itemize}
+\item \textbf{Focus on Facial Structure}: LIME consistently highlighted chin-lip regions, suggesting the model relies on jaw structure and lower facial features for gender classification.
+\item \textbf{Correct Predictions}: For accurate classifications, LIME emphasized features like chin definition, lip shape, and cheek contours.
+\item \textbf{Subgroup Consistency}: Analysis across demographic subgroups (all ages/races, young adult Indians, Black children) showed consistent focus on lower facial regions.
+\item \textbf{Potential Bias Indicators}: Some explanations highlighted beard-prone areas, which could indicate reliance on age and culturally-specific gender markers.
+\end{itemize}
+
+
+\begin{figure}[H]
+\centering
+% First row of images
+\begin{subfigure}{0.36\textwidth}
+\includegraphics[width=\textwidth]{age_child_race_1_correct.png}
+\caption{Correct (Black - 0 to 17)}
+\end{subfigure}
+\begin{subfigure}{0.36\textwidth}
+\includegraphics[width=\textwidth]{age_child_race_1_incorrect.png}
+\caption{Incorrect (Black - 0 to 17)}
+\end{subfigure}
+
+
+
+% Second row of images
+\begin{subfigure}{0.36\textwidth}
+\includegraphics[width=\textwidth]{age_young_adult_race_3_correct.png}
+\caption{Correct (Indian - 18 to 39)}
+\end{subfigure}
+\begin{subfigure}{0.36\textwidth}
+\includegraphics[width=\textwidth]{age_young_adult_race_3_incorrect.png}
+\caption{Incorrect (Indian - 18 to 39)}
+\end{subfigure}
+
+
+
+% Third row of images
+\begin{subfigure}{0.36\textwidth}
+\includegraphics[width=\textwidth]{age_child_race_2_correct.png} % Add the correct image file path
+\caption{Correct (Asian - 0 to 17)}
+\end{subfigure}
+\begin{subfigure}{0.36\textwidth}
+\includegraphics[width=\textwidth]{age_child_race_2_incorrect.png} % Add the correct image file path
+\caption{Incorrect (Asian - 0 to 17)}
+\end{subfigure}
+
+\caption{LIME explanations showing superpixel importance for gender classification decisions}
+\label{fig:lime_results}
+\end{figure}
+
+LIME mostly highlights lip and chin related areas. The model seems to be making predictions based on these concepts. We can also observe some sort of bias where the model makes incorrect predictions when a young male does not have facial hair. 
+
+
+\subsection{SHAP Explanations}
+SHAP (SHapley Additive exPlanations) provided gradient-based attributions revealing finer-grained feature importance:
+\\
+\\
+\textbf{Key Findings:}
+\begin{itemize}
+\item \textbf{Lipsa and Contour Focus}: SHAP also highlighted lips edges, cheek contours, nose borders, and eye socket regions.
+\item \textbf{Multi-feature Integration}: Unlike LIME's regional focus, SHAP showed distributed importance across eyes, eyebrows, nose, and mouth areas.
+\item \textbf{Subgroup Variations}: Aggregated SHAP maps revealed subtle differences in feature importance across demographic groups.
+\item \textbf{Complementary Insights}: SHAP and LIME agreed on mouth region importance.
+\end{itemize}
+
+
+\begin{figure}[H]
+\centering
+% First row of images
+\begin{subfigure}{0.36\textwidth}
+\includegraphics[width=\textwidth]{age_child__race_1_correct.png}
+\caption{Correct (Black - 0 to 17)}
+\end{subfigure}
+\begin{subfigure}{0.36\textwidth}
+\includegraphics[width=\textwidth]{age_child__race_1_incorrect.png}
+\caption{Incorrect (Black - 0 to 17)}
+\end{subfigure}
+
+
+
+% Second row of images
+\begin{subfigure}{0.36\textwidth}
+\includegraphics[width=\textwidth]{age_young_adult__race_3_correct.png}
+\caption{Correct (Indian - 18 to 39)}
+\end{subfigure}
+\begin{subfigure}{0.36\textwidth}
+\includegraphics[width=\textwidth]{age_young_adult__race_3_incorrect.png}
+\caption{Incorrect (Indian - 18 to 39)}
+\end{subfigure}
+
+
+
+% Third row of images
+\begin{subfigure}{0.36\textwidth}
+\includegraphics[width=\textwidth]{age_child__race_2_correct.png} % Add the correct image file path
+\caption{Correct (Asian - 0 to 17)}
+\end{subfigure}
+\begin{subfigure}{0.36\textwidth}
+\includegraphics[width=\textwidth]{age_child__race_2_incorrect.png} % Add the correct image file path
+\caption{Incorrect (Asian - 0 to 17)}
+\end{subfigure}
+
+\caption{SHAP explanations for gender classification decisions}
+\label{fig:lime_results}
+\end{figure}
+
+
+We also tried computing the aggregated SHAP maps for specific subgroups. Below is the SHAP map for (a) 18-39 aged Indian race and (2) 0-17 aged Black race subgroups.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\textwidth]{shap_young_adult_indian_agg.png}
+\caption{Aggregated SHAP - Young Adult Indian}
+\end{subfigure}
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\textwidth]{shap_black_child_agg.png}
+\caption{Aggregated SHAP - Black Child}
+\end{subfigure}
+\caption{Aggregated SHAP attributions showing demographic-specific attention patterns}
+\label{fig:shap_results}
+\end{figure}
+
+The aggregated SHAP attributions for both the above groups show similar regions highlighted. For the model predictions on young adult Indian subgroup, it relies more on the eyes, mouth and cheek contours. The case is similar for the model predictions on child Black subgroup, where is also focuses on the cheek contours and lips significantly.
+
+\section{Concept-Based Explanations: TCAV and ACE Analysis}
+
+\subsection{TCAV Analysis}
+TCAV (Testing with Concept Activation Vectors) measured the influence of human-interpretable concepts on gender predictions:
+\\
+\\
+\textbf{Concept Selection:}
+\begin{itemize}
+\item \textbf{Semantic Concepts}: Beard, glasses, and wrinkles (50 images each)
+\item \textbf{Random Baselines}: Two random concept sets for statistical significance testing. We tried using images with Gaussian noise as well as random images found on the internet.
+\item \textbf{Target Layers}: layer3.1.conv2, layer4.1.conv1, layer4.1.conv2 (late convolutional features)
+\end{itemize}
+\\
+\\
+\textbf{Key Results:}
+\begin{itemize}
+\item \textbf{Beard Concept}: Strong positive correlation with male classification across all tested layers, especially \texttt{layer4.1.conv1} and \texttt{layer4.1.conv2} with TCAV scores above 0.9 when tested against two random concepts.
+\item \textbf{Glasses Concept}: Low influence on gender predictions, showing layer-dependent sensitivity. Data for faces with glasses was also sparse hence not highly reliable concept.
+\item \textbf{Wrinkle Concept}: Stronger association with female classifications in deeper layers when tested with one random concept but opposite for the other random concept. Not a reliable concept.
+\end{itemize}
+
+
+
+\begin{figure}[H]
+\centering
+% First row of image
+\begin{subfigure}{0.8\textwidth}
+\includegraphics[width=\textwidth]{tcav_beard_male.png}
+\caption{Beard vs random sets of concept with target male for gender prediction}
+\end{subfigure}
+
+% Second row of image
+\begin{subfigure}{0.8\textwidth}
+\includegraphics[width=\textwidth]{tcav_wrinkle_female.png}
+\caption{Wrinkle vs random sets of concept with target female for gender prediction}
+\end{subfigure}
+
+% Third row of images
+\begin{subfigure}{0.58\textwidth}
+\includegraphics[width=\textwidth]{tcav_3concepts_male.png}
+\caption{All three human defined concepts for target male}
+\end{subfigure}
+\begin{subfigure}{0.58\textwidth}
+\includegraphics[width=\textwidth]{tcav_3concepts_female.png}
+\caption{All three human defined concepts for target female}
+\end{subfigure}
+\caption{Examples of human-defined concepts used in TCAV analysis: beard, glasses, wrinkles, and random controls}
+\end{figure}
+
+
+\begin{itemize}
+\item \textbf{Subgroup Analysis}: Concept importance varied across demographic groups, with beard concept showing stronger influence for certain age-race combinations.
+\end{itemize}
+
+
+
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.8\textwidth}
+\includegraphics[width=\textwidth]{tcav_subgroup_youngadult_race3.png}
+\caption{TCAV scores for age 18-39 and race Indian}
+\end{subfigure}
+\begin{subfigure}{0.8\textwidth}
+\includegraphics[width=\textwidth]{tcav_subgroup_child_race1.png}
+\caption{TCAV scores for age 0-17 and race Black}
+\end{subfigure}
+\caption{TCAV analysis results on subgroups to see if concept influence varies across demographics}
+\label{fig:tcav_results}
+\end{figure}
+
+\subsection{ACE Analysis}
+ACE (Automatic Concept Extraction) automatically discovered concepts from the data using unsupervised clustering:
+
+\textbf{Methodology:}
+\begin{itemize}
+\item \textbf{Segmentation}: Images segmented into 30 superpixels using SLIC algorithm
+\item \textbf{Feature Extraction}: Patch embeddings extracted from layer4.1.conv2 activations
+\item \textbf{Clustering}: K-means clustering (k=3) applied to discover concept clusters
+\item \textbf{Patch Selection}: Top 40 representative patches per concept cluster
+\item \textbf{Validation}: Discovered concepts tested using TCAV framework
+\end{itemize}
+
+\textbf{Discovered Concepts:}
+The ACE pipeline automatically identified 3 distinct visual concepts:
+\begin{itemize}
+\item \textbf{ace\_0}: Hair texture and forehead regions
+\item \textbf{ace\_1}: Eyes and eyebrow patterns  
+\item \textbf{ace\_2}: Skin texture like wrinkles
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+% First row of image
+\begin{subfigure}{0.8\textwidth}
+\includegraphics[width=\textwidth]{ace0.png}
+\caption{ACE concept 0}
+\end{subfigure}
+
+% Second row of image
+\begin{subfigure}{0.8\textwidth}
+\includegraphics[width=\textwidth]{ace1.png}
+\caption{ACE concept 1}
+\end{subfigure}
+
+% Third row of images
+\begin{subfigure}{0.8\textwidth}
+\includegraphics[width=\textwidth]{ace2.png}
+\caption{ACE concept 2}
+\end{subfigure}
+
+\caption{ACE-discovered concepts showing automatically identified visual patterns in face images}
+\end{figure}
+
+\subsection{ACE-TCAV Validation:}
+When validated through TCAV, ACE concepts showed:
+\begin{itemize}
+\item \textbf{Complementary Patterns}: ACE concepts captured different aspects than hand-crafted concepts
+\item \textbf{Layer Sensitivity}: Different concepts showed varying importance across network layers
+\item \textbf{Gender Specificity}: All three ACE concepts showed strong gender associations
+\item \textbf{Data-Driven Insights}: ACE revealed that the model focuses on hair texture, eyes and skin texture more than anticipated.
+\end{itemize}
+
+
+\begin{figure}[H]
+\centering
+% First row of image
+\begin{subfigure}{0.8\textwidth}
+\includegraphics[width=\textwidth]{3_ace_male.png}
+\caption{Target male}
+\end{subfigure}
+
+% Second row of image
+\begin{subfigure}{0.8\textwidth}
+\includegraphics[width=\textwidth]{3_ace_female.png}
+\caption{Target female}
+\end{subfigure}
+\caption{TCAV scores for ACE-discovered concepts across different targets}
+\end{figure}
+
+
+\begin{figure}[H]
+\centering
+
+\begin{subfigure}{0.8\textwidth}
+\includegraphics[width=\textwidth]{ace_vs_handcrafted.png}
+\caption{Comparison of TCAV scores between hand-crafted and ACE-discovered concepts}
+\end{subfigure}
+\end{figure}
+
+\section{Bias Analysis and Synthesis}
+
+Our analysis reveals some findings about potential bias in the gender classification model:
+
+\subsection{Identified Bias Patterns}
+\begin{enumerate}
+\item \textbf{Cultural Artifacts}: Strong reliance on beard concept suggests the model may have learned culturally-specific gender markers rather than fundamental anatomical differences.
+
+\item \textbf{Demographic Variations}: Subgroup-specific TCAV analysis revealed that concept importance varies across age-race combinations, however, beard, for some reason retains a high tcav score across the dataset.
+
+\item \textbf{Texture Dependencies}: ACE analysis revealed significant reliance on hair texture and skin patterns, which may correlate with demographic attributes.
+\end{enumerate}
+
+\subsection{Positive Findings}
+\begin{enumerate}
+\item \textbf{Anatomical Focus}: Both LIME and SHAP consistently highlighted anatomically relevant features (jaw, chin, mouth) for gender classification. Similarly, ACE also highlighted features like eyes.
+
+\item \textbf{Robust Performance}: Strong performance across demographic subgroups indicates the model generalizes reasonably well.
+
+\end{enumerate}
+
+\section{Bias Mitigation Strategy}
+
+Based on our analysis, we propose the following concrete mitigation strategy:
+
+\subsection{Recommended Approach}
+
+
+\begin{enumerate}
+\item \textbf{Targeted Data Augmentation}: Generate synthetic variations of beard/facial hair patterns across all demographic groups to reduce cultural bias in beard-related features.
+
+\item \textbf{Background Randomization}: Apply random background replacement during training to prevent the model from learning spurious environmental correlations.
+
+\item \textbf{Concept Regularization}: Add a regularization term that penalizes excessive reliance on culturally-specific concepts (beard, hair texture) while preserving anatomical feature learning.
+\end{enumerate}
+
+\subsection{Evaluation Protocol}
+To assess mitigation effectiveness, we would:
+
+\begin{enumerate}
+\item \textbf{TCAV Monitoring}: Track changes in concept importance scores, expecting reduced beard concept influence and more balanced concept usage across demographics.
+
+\item \textbf{Subgroup Performance}: Monitor performance metrics across all age-race-gender combinations to ensure no degradation in minority groups.
+
+\end{enumerate}
+
+
+\section{Conclusion}
+
+While the model achieves strong performance and demonstrates focus on anatomically relevant features, it also exhibits concerning reliance on culturally-specific markers like facial hair patterns. The combination of LIME, SHAP, TCAV, and ACE provides complementary insights that would not be apparent from any single method alone.
+
+
+\end{document}
