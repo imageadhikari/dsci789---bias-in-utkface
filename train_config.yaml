@@ -1,7 +1,7 @@
 data_dirs:
-  - /home/stu13/s8/ia3494/exp_ai_assignments/train_data/part1_cropped
-  - /home/stu13/s8/ia3494/exp_ai_assignments/train_data/part2_cropped
-  - /home/stu13/s8/ia3494/exp_ai_assignments/train_data/part3_cropped
+  - ./train_data/part1_cropped
+  - .//train_data/part2_cropped
+  - ./train_data/part3_cropped
 
 out_dir: ./train_output
 seed: 42
